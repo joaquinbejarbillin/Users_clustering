@@ -9,6 +9,8 @@ from pandas.plotting import scatter_matrix
 import collections
 import numpy as np
 
+import dill
+
 host = 'prod-pentaho.cxfaihg8elfv.eu-west-1.rds.amazonaws.com'
 db = 'billin_prod'
 user = 'billin'
@@ -180,3 +182,12 @@ def plot_results(x, y, window_size, sigma_value=1,
     # add grid and lines and enable the plot
     plt.grid(True)
     plt.show()
+
+def save_object(obj, filename):
+    with open(filename, 'wb') as output:  # Overwrites any existing file.
+        dill.dump(obj, output)
+
+def load_object(filename):
+    with open(filename, 'rb') as file:
+        obj = dill.load(file)
+    return obj
