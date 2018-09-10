@@ -29,7 +29,8 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 
 
-host = 'prod-pentaho.cxfaihg8elfv.eu-west-1.rds.amazonaws.com'
+#host = 'prod-pentaho.cxfaihg8elfv.eu-west-1.rds.amazonaws.com'
+host = '10.0.5.209'
 db = 'billin_prod'
 user = 'billin'
 password = 'ThisIsTheRiverOfTheNight'
@@ -40,6 +41,8 @@ df = db.gettable('users')
 df.set_index('id',inplace=True)
 columns = df.describe().columns.tolist()
 
+print('Saving DF')
+save_object(df, './df.pkl')
 
 temp = df.drop(labels=['password', 'email', 'created_at', 'updated_at', 'locked', 'vip', 'third_party_sharing_permission', 'name', 'lastname'], axis=1)
 temp['last_seen'] = temp.last_seen.map(lambda c: int(c.timestamp()) if c is not pd.NaT else 0 )
@@ -99,6 +102,7 @@ temp.referrer = temp.referrer.map(lambda r: 0 if r is None else 1)
 
 indexes = temp.index
 
+print('creating PCA')
 X2,pca  = rulePCA(temp, n=2)
 #dforig = df[columns].copy()
 df2pca = pd.DataFrame(X2,columns=['d1','d2'])
@@ -114,6 +118,7 @@ X_train = df2pca[['d1', 'd2']].as_matrix()
 X_test = df2pca.sample(n=1000).as_matrix()
 X_outliers = df2pca.sample(n=100).as_matrix()
 
+print('IsolationForest')
 # fit the model
 clf = IsolationForest(n_estimators=50, max_samples=50, random_state=rng, n_jobs=48, contamination=0.07)
 clf.fit(X_train)
@@ -149,7 +154,7 @@ y_pred_train = clf.predict(X_train)
 y_pred_test = clf.predict(X_test)
 y_pred_outliers = clf.predict(X_outliers)
 
-
+print('Outliers')
 
 df = pd.DataFrame(X_train)
 
@@ -160,14 +165,15 @@ df.index=indexes
 inliers = df.loc[df['outlier'] == 1].drop(columns='outlier').as_matrix()
 outliers = df.loc[df['outlier'] == -1].drop(columns='outlier').as_matrix()
 
-
+print('Creating Clustering')
 #sampledf3pca = df3pca.sample(n=1700)
 sampledf3pca = df3pca.copy()
-print('Clustering')
 #db = DBSCAN(eps=0.3, min_samples=500, algorithm='kd_tree', n_jobs=-1).fit(sampledf3pca)
 db = SpectralClustering(n_clusters=3, eigen_solver='arpack', affinity="nearest_neighbors", n_jobs=-1).fit(sampledf3pca)
 #db = KMeans(n_clusters=3, precompute_distances=True, n_jobs=-1).fit(sampledf3pca)
 
+
+print('Saving Clusters')
 save_object(db, './Cluster.pkl')
 
 labels = db.labels_
@@ -175,4 +181,8 @@ sampledf3pca['Cluster'] = pd.Series(labels, index=sampledf3pca.index)
 Cluster0 = sampledf3pca.loc[sampledf3pca['Cluster'] == 0].drop(columns='Cluster').as_matrix()
 Cluster1 = sampledf3pca.loc[sampledf3pca['Cluster'] == 1].drop(columns='Cluster').as_matrix()
 Cluster2 = sampledf3pca.loc[sampledf3pca['Cluster'] == 2].drop(columns='Cluster').as_matrix()
+
+save_object(sampledf3pca, './sampledf3pca.pkl')
+save_object(temp, './temp.pkl')
+
 
