@@ -69,6 +69,11 @@ class DB():
 
         return pd.read_sql_query('select * from "{}"'.format(table), con=self.engine)
 
+    def filter(self, table, filter):
+
+        return pd.read_sql_query('select * from "{}" where {}'.format(table,filter), con=self.engine)
+
+
 
 def ScatterMatrix(df):
 

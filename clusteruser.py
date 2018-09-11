@@ -41,6 +41,8 @@ df = db.gettable('users')
 df.set_index('id',inplace=True)
 columns = df.describe().columns.tolist()
 
+dforig = df.copy()
+
 print('Saving DF')
 save_object(df, './df.pkl')
 
@@ -105,11 +107,11 @@ indexes = temp.index
 print('creating PCA')
 X2,pca  = rulePCA(temp, n=2)
 #dforig = df[columns].copy()
-df2pca = pd.DataFrame(X2,columns=['d1','d2'])
+df2pca = pd.DataFrame(X2,columns=['d1','d2'], index=temp.index)
 
 X3,pca  = rulePCA(temp, n=3)
 #dforig = df[columns].copy()
-df3pca = pd.DataFrame(X3,columns=['d1','d2', 'd3'])
+df3pca = pd.DataFrame(X3,columns=['d1','d2', 'd3'], index=temp.index)
 
 rng = np.random.RandomState(42)
 
@@ -133,7 +135,7 @@ xx, yy = np.meshgrid(np.linspace(X_train[:, 0].min(), X_train[:, 0].max(), __spa
 Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
 Z = Z.reshape(xx.shape)
 
-df = pd.DataFrame(X_train)
+df = pd.DataFrame(X_train, index=df2pca.index)
 df['output'] = y_pred_train
 
 inliers = df.loc[df['output'] == 1].drop(columns='output').as_matrix()
@@ -156,7 +158,7 @@ y_pred_outliers = clf.predict(X_outliers)
 
 print('Outliers')
 
-df = pd.DataFrame(X_train)
+df = pd.DataFrame(X_train, index=df3pca.index)
 
 df['outlier'] = y_pred_train
 df.columns = ['d1', 'd2', 'd3','outlier']
@@ -169,8 +171,8 @@ print('Creating Clustering')
 #sampledf3pca = df3pca.sample(n=1700)
 sampledf3pca = df3pca.copy()
 #db = DBSCAN(eps=0.3, min_samples=500, algorithm='kd_tree', n_jobs=-1).fit(sampledf3pca)
-db = SpectralClustering(n_clusters=3, eigen_solver='arpack', affinity="nearest_neighbors", n_jobs=96).fit(sampledf3pca)
-#db = KMeans(n_clusters=3,  n_jobs=96).fit(sampledf3pca)
+#db = SpectralClustering(n_clusters=3, eigen_solver='arpack', affinity="nearest_neighbors", n_jobs=96).fit(sampledf3pca)
+db = KMeans(n_clusters=3,  n_jobs=96).fit(sampledf3pca)
 
 
 print('Saving Clusters')
@@ -178,11 +180,14 @@ save_object(db, './Cluster.pkl')
 
 labels = db.labels_
 sampledf3pca['Cluster'] = pd.Series(labels, index=sampledf3pca.index)
-Cluster0 = sampledf3pca.loc[sampledf3pca['Cluster'] == 0].drop(columns='Cluster').as_matrix()
-Cluster1 = sampledf3pca.loc[sampledf3pca['Cluster'] == 1].drop(columns='Cluster').as_matrix()
-Cluster2 = sampledf3pca.loc[sampledf3pca['Cluster'] == 2].drop(columns='Cluster').as_matrix()
+#Cluster0 = sampledf3pca.loc[sampledf3pca['Cluster'] == 0].drop(columns='Cluster').as_matrix()
+#Cluster1 = sampledf3pca.loc[sampledf3pca['Cluster'] == 1].drop(columns='Cluster').as_matrix()
+#Cluster2 = sampledf3pca.loc[sampledf3pca['Cluster'] == 2].drop(columns='Cluster').as_matrix()
 
 save_object(sampledf3pca, './sampledf3pca.pkl')
 save_object(temp, './temp.pkl')
 
+
+output = pd.concat([sampledf3pca, df.outlier, temp], axis=1)
+save_object(output, './output.pkl')
 
