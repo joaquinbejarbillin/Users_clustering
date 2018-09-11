@@ -169,8 +169,8 @@ print('Creating Clustering')
 #sampledf3pca = df3pca.sample(n=1700)
 sampledf3pca = df3pca.copy()
 #db = DBSCAN(eps=0.3, min_samples=500, algorithm='kd_tree', n_jobs=-1).fit(sampledf3pca)
-db = SpectralClustering(n_clusters=3, eigen_solver='arpack', affinity="nearest_neighbors", n_jobs=-1).fit(sampledf3pca)
-#db = KMeans(n_clusters=3, precompute_distances=True, n_jobs=-1).fit(sampledf3pca)
+db = SpectralClustering(n_clusters=3, eigen_solver='arpack', affinity="nearest_neighbors", n_jobs=96).fit(sampledf3pca)
+#db = KMeans(n_clusters=3,  n_jobs=96).fit(sampledf3pca)
 
 
 print('Saving Clusters')
