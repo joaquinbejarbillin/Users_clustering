@@ -82,7 +82,7 @@ def ScatterMatrix(df):
     _ = scatter_matrix(df.dropna(axis=0,how='any'), alpha=0.4, diagonal='kde', ax=ax)
 
 
-def rulePCA(X,  n=2):
+def rulePCA(X, n=2):
     from sklearn.decomposition import PCA
     pca = PCA(n_components=n)
     try:
